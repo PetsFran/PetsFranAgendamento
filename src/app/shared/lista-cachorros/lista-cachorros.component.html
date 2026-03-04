@@ -1,0 +1,62 @@
+<div class="lista-container">
+  <h2>🐶 Cachorros Cadastrados</h2>
+
+  <div class="filtros">
+    <mat-form-field appearance="outline">
+      <mat-label>Buscar por nome, tutor ou endereço</mat-label>
+      <input
+        matInput
+        (keyup)="aplicarFiltro($event)"
+        placeholder="Digite para filtrar"
+      />
+    </mat-form-field>
+
+    <button mat-button (click)="limparFiltro()">Limpar filtro</button>
+  </div>
+
+  <ng-container *ngIf="cachorrosFiltrados.length > 0; else semResultados">
+    <div class="cachorros-flex">
+      <div 
+        *ngFor="let cachorro of cachorrosFiltrados" 
+        class="cachorro-card"
+      >
+        <h3>{{ cachorro.nomeCachorro }}</h3>
+        
+        <div class="info">
+          <p><strong>Tutor:</strong> {{ cachorro.nomeTutor }}</p>
+          <p><strong>Raça:</strong> {{ cachorro.raca }}</p>
+          <p><strong>Porte:</strong> {{ cachorro.porte }}</p>
+          
+          <!-- 🔥 CONTATO COMO LINK DO WHATSAPP -->
+          <p>
+            <strong>Contato: </strong>
+            <a [href]="getWhatsappLink(cachorro.contatoTutor)" target="_blank" rel="noopener" class="link-contato">
+              {{ cachorro.contatoTutor }}
+            </a>
+          </p>
+          
+          <!-- 🔥 ENDEREÇO COMO LINK DO GOOGLE MAPS -->
+          <p>
+            <strong>Endereço: </strong>
+            <a [href]="getGoogleMapsLink(cachorro.enderecoCachorro)" target="_blank" rel="noopener" class="link-endereco">
+              {{ cachorro.enderecoCachorro }}
+            </a>
+          </p>
+        </div>
+        
+        <!-- 🔥 APENAS O FOOTER É CLICÁVEL -->
+        <div class="card-footer">
+          <span class="editar-hint" (click)="editarCachorro(cachorro)">Clique para editar ✏️</span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #semResultados>
+    <div class="sem-resultados">
+      <p *ngIf="filtroAtivo">Nenhum cachorro encontrado para "{{ filtroTexto }}"</p>
+      <p *ngIf="!filtroAtivo">Nenhum cachorro cadastrado ainda.</p>
+      <button class="botao-cadastrar" (click)="abrirCadastro()">Cadastrar Cachorro</button>
+    </div>
+  </ng-template>
+</div>

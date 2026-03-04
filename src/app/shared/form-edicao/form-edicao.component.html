@@ -1,47 +1,43 @@
 <form (ngSubmit)="salvarEdicao()" #form="ngForm" class="form-cadastro">
   <h2>Editar Horário</h2>
 
-  <div class="ficha-cachorro" *ngIf="horarioEditado.cachorros[0]">
+  <div class="ficha-cachorro" *ngIf="horarioEditado.cachorro">
     <h4>🐾 Ficha do Pet</h4>
-    <p><strong>Nome:</strong> {{ horarioEditado.cachorros[0].nomeCachorro }}</p>
-    <p><strong>Tutor:</strong> {{ horarioEditado.cachorros[0].nomeTutor }}</p>
-    <p><strong>Porte:</strong> {{ horarioEditado.cachorros[0].porte }}</p>
-    <p><strong>Raça:</strong> {{ horarioEditado.cachorros[0].raca }}</p>
-    <p><strong>Contato:</strong> {{ horarioEditado.cachorros[0].contatoTutor }}</p>
-    <p><strong>Endereço:</strong> {{ horarioEditado.cachorros[0].endereco }}</p>
+    <p><strong>Nome:</strong> {{ horarioEditado.cachorro.nome }}</p>
+    <p><strong>Tutor:</strong> {{ horarioEditado.cachorro.nomeTutor }}</p>
+    <p><strong>Porte:</strong> {{ horarioEditado.cachorro.porte }}</p>
+    <p><strong>Raça:</strong> {{ horarioEditado.cachorro.raca }}</p>
+    <p><strong>Contato:</strong> {{ horarioEditado.cachorro.contatoTutor }}</p>
+    <p><strong>Endereço:</strong> {{ horarioEditado.cachorro.endereco || 'Não informado' }}</p>
   </div>
 
-    <input
-      matInput
-      type="date"
-      class="inputData"
-      [(ngModel)]="horarioEditado.data"
-      name="data"
-      required
-    />
+  <input
+    type="date"
+    class="inputData"
+    [(ngModel)]="horarioEditado.data"
+    name="data"
+    required
+  />
 
-    <input
-      matInput
-      type="time"
-      class="inputData"
-      [(ngModel)]="horarioEditado.horario"
-      name="horario"
-      required
-    />
+  <input
+    type="time"
+    class="inputData"
+    [(ngModel)]="horarioEditado.horario"
+    name="horario"
+    required
+  />
 
   <div class="servicos-section">
     <label>Serviço Base</label>
     <div *ngFor="let servico of servicosBaseDisponiveis" class="radio-option">
       <input
         type="radio"
-        [id]="'base_' + servico"
         [value]="servico"
         name="servicoBase"
-        [(ngModel)]="horarioEditado.servicosBaseSelecionado"
-        (change)="calcularValor()"
+        [(ngModel)]="horarioEditado.servicoBaseSelecionado"
         required
       />
-      <label [for]="'base_' + servico">{{ servico }}</label>
+      <label>{{ servico }}</label>
     </div>
   </div>
 
@@ -50,17 +46,16 @@
     <div *ngFor="let adicional of servicosAdicionaisDisponiveis" class="checkbox-option">
       <input
         type="checkbox"
-        [id]="'add_' + adicional"
         [value]="adicional"
         [checked]="horarioEditado.adicionais.includes(adicional)"
         (change)="toggleServicoAdicional(adicional)"
       />
-      <label [for]="'add_' + adicional">{{ adicional }}</label>
+      <label>{{ adicional }}</label>
     </div>
   </div>
 
   <div class="valor-total">
-    <strong>Valor Total: R$ {{ horarioEditado.valorTotal.toFixed(2) }}</strong>
+    <strong>Valor Total: R$ {{ horarioEditado.valorTotal?.toFixed(2) || '0.00' }}</strong>
   </div>
 
   <div class="buttons">

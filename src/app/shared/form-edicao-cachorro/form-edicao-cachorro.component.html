@@ -1,0 +1,65 @@
+<form (ngSubmit)="salvarEdicao()" #form="ngForm" class="form-cadastro">
+  <h2>Editar Cachorro</h2>
+
+  <input
+    class="inputCachorroContainer"
+    [(ngModel)]="cachorroEditado.nomeCachorro"
+    name="nomeCachorro"
+    placeholder="Nome do Cachorro"
+    required
+  />
+
+  <input
+    class="inputCachorroContainer"
+    [(ngModel)]="cachorroEditado.nomeTutor"
+    name="nomeTutor"
+    placeholder="Nome do Tutor"
+    required
+  />
+
+  <input
+    class="inputCachorroContainer"
+    [(ngModel)]="cachorroEditado.contatoTutor"
+    name="contatoTutor"
+    placeholder="Contato"
+    required
+  />
+
+  <input
+    class="inputCachorroContainer"
+    [(ngModel)]="cachorroEditado.enderecoCachorro"
+    name="enderecoCachorro"
+    placeholder="Endereço"
+    required
+  />
+
+  <select
+    class="inputCachorroContainer"
+    [(ngModel)]="cachorroEditado.porte"
+    name="porte"
+    required
+    (change)="atualizarRacas()"
+  >
+    <option value="" disabled selected>Selecione o porte</option>
+    <option value="Pequeno">Pequeno</option>
+    <option value="Médio">Médio</option>
+    <option value="Grande">Grande</option>
+  </select>
+
+  <select
+    class="inputCachorroContainer"
+    [(ngModel)]="cachorroEditado.raca"
+    name="raca"
+    required
+  >
+    <option value="" disabled selected>Selecione a raça</option>
+    <option *ngFor="let raca of racasDisponiveis" [value]="raca">
+      {{ raca }}
+    </option>
+  </select>
+
+  <div class="buttons" style="display: flex; gap: 8px; margin-top: 8px;">
+    <button type="submit" [disabled]="form.invalid" style="flex: 2;">Salvar Alterações</button>
+    <button type="button" class="warnButton" (click)="excluirCachorro()" style="flex: 1; background-color: #8b0000;">Excluir</button>
+  </div>
+</form>

@@ -1,11 +1,25 @@
-import { cachorro } from './cachorro.model';
+import { CachorroInfo } from './cachorro.model';
+import { PetShopInfo } from './petshop.model';
 
-export interface horario {
-  id: string;
-  cachorros: cachorro[];
+export interface Horario {
+  id: number;
   data: string;
-  horario: string;
-  valorTotal: number;
-  servicosBaseSelecionado: string;
+  servicoBaseSelecionado: string;
   adicionais: string[];
+  valorTotal: number;
+  cachorro: CachorroInfo;
+  petShop: PetShopInfo;
+}
+
+export interface CreateHorarioDto {
+  cachorroId: number;
+  data: string;
+  servicoBaseSelecionado: string;
+  adicionais?: string[];
+}
+
+export interface UpdateHorarioDto {
+  data?: string;
+  servicoBaseSelecionado?: string;
+  adicionais?: string[];
 }

@@ -10,9 +10,45 @@ mat-header-cell{
 *{
   font-size:medium;
 }
-.filtros{
-  width: 100%;
+.filtros {
   display: flex;
-  gap: 18px;
+  gap: 16px;
+  margin-bottom: 16px;
   align-items: center;
+  flex-wrap: wrap;
+
+  mat-form-field {
+    flex: 1;
+    min-width: 200px;
+    max-width: 200px;
+  }
+
+  button {
+    height: 56px; // Para alinhar com os inputs
+  }
+}
+.resizer {
+  width: 5px;
+  background-color: #ccc;
+  cursor: col-resize;
+  transition: background-color 0.2s;
+  
+  &:hover, &.resizing {
+    background-color: #b65151;
+  }
+}
+
+.left-pane, .right-pane {
+  overflow: auto;
+  transition: none; // Remove transição para não atrapalhar o resize
+}
+
+@media (max-width: 419px) {
+  .filtros{
+    gap: 0;
+    
+    .mat-form-field{
+      width: 100%;
+    }
+  }
 }

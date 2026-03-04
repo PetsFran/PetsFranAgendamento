@@ -1,8 +1,8 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { horario } from 'src/app/core/models/horario.model';
+import { Horario, UpdateHorarioDto } from 'src/app/core/models/horario.model';
 import { HorarioService } from 'src/app/core/services/horario.service';
-import { TabelaPrecosService } from 'src/app/core/services/tabela-precos.service';
+import { ValidaRacaService } from 'src/app/core/services/valida-raca.service';
 
 @Component({
   selector: 'app-form-edicao',
@@ -10,34 +10,52 @@ import { TabelaPrecosService } from 'src/app/core/services/tabela-precos.service
   styleUrls: ['./form-edicao.component.scss']
 })
 export class FormEdicaoComponent implements OnInit {
-  horarioEditado: horario;
+  horarioEditado: any;
   servicosBaseDisponiveis: string[] = [];
   servicosAdicionaisDisponiveis: string[] = [];
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) public data: { horario: horario },
+    @Inject(MAT_DIALOG_DATA) public data: { horario: Horario },
     private dialogRef: MatDialogRef<FormEdicaoComponent>,
     private horarioService: HorarioService,
-    private tabelaPrecos: TabelaPrecosService
+    private validaRacaService: ValidaRacaService
   ) {
-    // Cria uma cópia profunda do horário para edição
-    this.horarioEditado = JSON.parse(JSON.stringify(data.horario));
+    this.horarioEditado = { ...data.horario };
+    // Extrair data e hora separados
+    const [dataParte, hora] = data.horario.data.split(' ');
+    this.horarioEditado.data = dataParte;
+    this.horarioEditado.horario = hora;
+    
+    // Inicializar adicionais se não existir
+    if (!this.horarioEditado.adicionais) {
+      this.horarioEditado.adicionais = [];
+    }
   }
 
   ngOnInit() {
     this.carregarServicosDisponiveis();
-    this.servicosAdicionaisDisponiveis = this.tabelaPrecos.getServicosAdicionais();
-    this.calcularValor(); // Calcula o valor inicial
+    this.carregarServicosAdicionais();
   }
 
   carregarServicosDisponiveis() {
-    if (this.horarioEditado.cachorros.length > 0) {
-      const cachorro = this.horarioEditado.cachorros[0];
-      this.servicosBaseDisponiveis = this.tabelaPrecos.getServicosPorRacaPorte(
-        cachorro.raca, 
-        cachorro.porte
-      );
+    const cachorro = this.horarioEditado.cachorro;
+    if (cachorro) {
+      this.validaRacaService.getServicosPorRacaPorte(cachorro.raca, cachorro.porte).subscribe({
+        next: (servicos: string[]) => this.servicosBaseDisponiveis = servicos,
+        error: (err: any) => console.error('Erro ao carregar serviços', err)
+      });
     }
+  }
+
+  carregarServicosAdicionais() {
+    // Se você tiver um endpoint para serviços adicionais
+    this.servicosAdicionaisDisponiveis = [
+      'Escovação de Dente',
+      'Desembolo',
+      'Hidratação',
+      'Taxi Dog',
+      'Cortar Unha'
+    ];
   }
 
   toggleServicoAdicional(servico: string) {
@@ -47,41 +65,33 @@ export class FormEdicaoComponent implements OnInit {
     } else {
       this.horarioEditado.adicionais.push(servico);
     }
-    this.calcularValor();
-  }
-
-  calcularValor() {
-    if (this.horarioEditado.cachorros.length > 0) {
-      const cachorro = this.horarioEditado.cachorros[0];
-      
-      const base = this.horarioEditado.servicosBaseSelecionado
-        ? this.tabelaPrecos.getPrecoBasePorCachorro(cachorro, [this.horarioEditado.servicosBaseSelecionado])
-        : 0;
-
-      const adicionais = this.tabelaPrecos.getPrecoAdicionalPorCachorro(
-        cachorro, 
-        this.horarioEditado.adicionais
-      );
-
-      this.horarioEditado.valorTotal = base + adicionais;
-    }
   }
 
   excluirHorario() {
-  if (this.horarioEditado?.id) {
-    this.horarioService.removerHorario(this.horarioEditado.id);
-    alert('Horário excluído com sucesso!');
-    this.dialogRef.close(true); // Fecha o diálogo e sinaliza sucesso
+    if (this.horarioEditado?.id) {
+      this.horarioService.deletarHorario(this.horarioEditado.id).subscribe({
+        next: () => {
+          alert('Horário excluído com sucesso!');
+          this.dialogRef.close(true);
+        },
+        error: (err: any) => alert('Erro ao excluir: ' + err.message)
+      });
+    }
   }
-}
 
   salvarEdicao() {
-    // Recalcula o valor total antes de salvar
-    this.calcularValor();
+    const dto: UpdateHorarioDto = {
+      data: `${this.horarioEditado.data} ${this.horarioEditado.horario}`,
+      servicoBaseSelecionado: this.horarioEditado.servicoBaseSelecionado,
+      adicionais: this.horarioEditado.adicionais
+    };
     
-    // Atualiza o horário no serviço (que já emite a atualização via BehaviorSubject)
-    this.horarioService.atualizarHorario(this.horarioEditado);
-    
-    this.dialogRef.close(true); // Retorna true indicando sucesso
+    this.horarioService.atualizarHorario(this.horarioEditado.id, dto).subscribe({
+      next: () => {
+        alert('Horário atualizado com sucesso!');
+        this.dialogRef.close(true);
+      },
+      error: (err: any) => alert('Erro ao atualizar: ' + err.message)
+    });
   }
 }

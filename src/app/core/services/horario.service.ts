@@ -1,90 +1,86 @@
 import { Injectable } from '@angular/core';
-import { horario } from '../models/horario.model';
-import { BehaviorSubject } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
+import { Horario, CreateHorarioDto, UpdateHorarioDto } from '../models/horario.model';
+import { environment } from '../environments/environment';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class HorarioService {
-  private HORARIOS_KEY = 'horarios';
-  private HORARIOS_CONCLUIDOS_KEY = 'horariosConcluidos';
+  private baseUrl = environment.apiUrl;  // ← USA ENVIRONMENT
+  private horariosUrl = `${this.baseUrl}/horarios`;
+  private servicosUrl = `${this.baseUrl}/servicos`;
   
-  private horariosSubject = new BehaviorSubject<horario[]>(this.getHorarios());
+  private horariosSubject = new BehaviorSubject<Horario[]>([]);
   horarios$ = this.horariosSubject.asObservable();
 
-  //Inicializar com dados reais e criar método público
-  private horariosConcluidosSubject = new BehaviorSubject<horario[]>(
-    this.getHorariosConcluidos().map(item => item.horario)
-  );
-  horariosConcluidos$ = this.horariosConcluidosSubject.asObservable();
-
-  getHorarios(): horario[] {
-    const dados = localStorage.getItem(this.HORARIOS_KEY);
-    return dados ? JSON.parse(dados) : [];
+  constructor(private http: HttpClient) {
+    this.carregarHorarios();
   }
 
-  salvarHorario(h: horario): void {
-    const lista = this.getHorarios();
-    
-    //Verificar se ID já existe
-    const existe = lista.some(horario => horario.id === h.id);
-    if (existe) {
-      throw new Error(`Horário com ID ${h.id} já existe`);
+  carregarHorarios(): void {
+    this.http.get<Horario[]>(this.horariosUrl).subscribe({
+      next: (data) => this.horariosSubject.next(data),
+      error: (err) => console.error('Erro ao carregar horários', err)
+    });
+  }
+
+  getHorarios(): Horario[] {
+    return this.horariosSubject.value;
+  }
+
+  getHorarioById(id: number): Observable<Horario> {
+    return this.http.get<Horario>(`${this.horariosUrl}/${id}`);
+  }
+
+  salvarHorario(dto: CreateHorarioDto): Observable<Horario> {
+    return this.http.post<Horario>(this.horariosUrl, dto).pipe(
+      tap(novoHorario => {
+        const lista = this.horariosSubject.value;
+        this.horariosSubject.next([...lista, novoHorario]);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  atualizarHorario(id: number, dto: UpdateHorarioDto): Observable<Horario> {
+    return this.http.put<Horario>(`${this.horariosUrl}/${id}`, dto).pipe(
+      tap(horarioAtualizado => {
+        const lista = this.horariosSubject.value;
+        const index = lista.findIndex(h => h.id === id);
+        if (index > -1) {
+          lista[index] = horarioAtualizado;
+          this.horariosSubject.next([...lista]);
+        }
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  deletarHorario(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.horariosUrl}/${id}`).pipe(
+      tap(() => {
+        const lista = this.horariosSubject.value.filter(h => h.id !== id);
+        this.horariosSubject.next(lista);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  calcularPreco(raca: string, porte: string, servicoBase: string, adicionais: string[]): Observable<number> {
+    return this.http.post<number>(`${this.servicosUrl}/calcular-preco`, {
+      raca,
+      porte,
+      servicoBase,
+      adicionais
+    });
+  }
+
+  private handleError(error: any) {
+    console.error('Erro na API:', error);
+    let mensagem = 'Erro ao processar requisição';
+    if (error.error?.message) {
+      mensagem = error.error.message;
     }
-    
-    lista.push(h);
-    localStorage.setItem(this.HORARIOS_KEY, JSON.stringify(lista));
-    this.horariosSubject.next(lista);
-  }
-
-  removerHorario(id: string): void {
-    const lista = this.getHorarios().filter(h => h.id !== id);
-    localStorage.setItem(this.HORARIOS_KEY, JSON.stringify(lista));
-    this.horariosSubject.next(lista);
-  }
-
-  salvarHorarioConcluido(h: horario): void {
-    const agora = new Date();
-    const expiraEm = new Date(agora.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-    const concluido = {
-      horario: h,
-      expiraEm: expiraEm.toISOString()
-    };
-
-    const lista = this.getHorariosConcluidos();
-    lista.push(concluido);
-    localStorage.setItem(this.HORARIOS_CONCLUIDOS_KEY, JSON.stringify(lista));
-    
-    //Emitir atualização
-    this.emitirHorariosConcluidos();
-  }
-
-  getHorariosConcluidos(): { horario: horario; expiraEm: string }[] {
-    const dados = localStorage.getItem(this.HORARIOS_CONCLUIDOS_KEY);
-    const lista = dados ? JSON.parse(dados) : [];
-
-    const agora = new Date();
-    const filtrados = lista.filter((item: any) => new Date(item.expiraEm) > agora);
-
-    localStorage.setItem(this.HORARIOS_CONCLUIDOS_KEY, JSON.stringify(filtrados));
-    return filtrados;
-  }
-
-  //Método público para forçar atualização
-  emitirHorariosConcluidos() {
-    const lista = this.getHorariosConcluidos().map(item => item.horario);
-    this.horariosConcluidosSubject.next(lista);
-  }
-
-  atualizarHorario(horarioAtualizado: horario): void {
-    const horarios = this.getHorarios();
-    const index = horarios.findIndex(h => h.id === horarioAtualizado.id);
-    
-    if (index > -1) {
-      horarios[index] = horarioAtualizado;
-      localStorage.setItem(this.HORARIOS_KEY, JSON.stringify(horarios));
-      this.horariosSubject.next(horarios);
-    }
+    return throwError(() => new Error(mensagem));
   }
 }

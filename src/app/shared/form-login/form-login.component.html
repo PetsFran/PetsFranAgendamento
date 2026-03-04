@@ -1,0 +1,33 @@
+<form (ngSubmit)="salvar()" #form="ngForm" class="form-login">
+  <h2>Login</h2>
+
+  <input
+    class="inputLoginContainer"
+    [(ngModel)]="credenciais.email"
+    name="email"
+    type="email"
+    placeholder="Email"
+    required
+    email
+    #email="ngModel"
+  />
+
+  <input
+    class="inputLoginContainer"
+    [(ngModel)]="credenciais.senha"
+    name="senha"
+    type="password"
+    placeholder="Senha"
+    required
+    minlength="6"
+    #senha="ngModel"
+  />
+
+  <div *ngIf="erro" class="erro-mensagem">
+    {{ erro }}
+  </div>
+
+  <button type="submit" [disabled]="form.invalid || loading" class="submit-button">
+    {{ loading ? "Entrando..." : (form.invalid ? "Preencha todos os campos" : "Entrar") }}
+  </button>
+</form>

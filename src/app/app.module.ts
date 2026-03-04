@@ -18,11 +18,19 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatCardModule } from '@angular/material/card'; // ← NOVO
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { A11yModule } from "@angular/cdk/a11y";
 import { AngularSplitModule } from 'angular-split';
 import { FormEdicaoComponent } from './shared/form-edicao/form-edicao.component';
+
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { TokenInterceptor } from './core/interceptors/token.interceptor';
+import { AppRoutingModule } from './app-routing.module';
+import { FormLoginComponent } from './shared/form-login/form-login.component';
+import { ListaCachorrosComponent } from './shared/lista-cachorros/lista-cachorros.component';
+import { FormEdicaoCachorroComponent } from './shared/form-edicao-cachorro/form-edicao-cachorro.component'; // ← NOVO
 
 @NgModule({
   declarations: [
@@ -31,10 +39,15 @@ import { FormEdicaoComponent } from './shared/form-edicao/form-edicao.component'
     TableComponent,
     FormCadastroComponent,
     FormEdicaoComponent,
+    FormLoginComponent,
+    ListaCachorrosComponent,
+    FormEdicaoCachorroComponent,
   ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
+    HttpClientModule,
+    AppRoutingModule, // ← NOVO
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -49,8 +62,16 @@ import { FormEdicaoComponent } from './shared/form-edicao/form-edicao.component'
     MatDatepickerModule,
     MatNativeDateModule,
     MatPaginatorModule,
+    MatCardModule, // ← NOVO
   ],
-  providers: [ { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' } ],
+  providers: [ 
+    { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: TokenInterceptor,
+      multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

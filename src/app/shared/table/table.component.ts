@@ -1,47 +1,43 @@
-import { Input, Component, EventEmitter, OnInit, OnChanges, SimpleChanges, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnInit, OnChanges, Output, ViewChild, Input, SimpleChanges, AfterViewInit, HostListener } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { horario } from 'src/app/core/models/horario.model';
-import { HorarioService } from 'src/app/core/services/horario.service';
 import { MatDatepickerInputEvent } from '@angular/material/datepicker';
-
-type FiltroHorario = {
-  texto: string;
-  data: string;
-};
+import { Horario } from 'src/app/core/models/horario.model';
+import { HorarioService } from 'src/app/core/services/horario.service';
 
 @Component({
   selector: 'app-table',
   templateUrl: './table.component.html',
   styleUrls: ['./table.component.scss']
 })
-export class TableComponent implements OnInit, OnChanges {
-  displayedColumns: string[] = ['cachorro', 'tutor', 'endereco', 'horario'];
-  dataSource = new MatTableDataSource<horario>([]);
-  filtroTexto: string = '';
-  filtroData: string = '';
+export class TableComponent implements OnInit, OnChanges, AfterViewInit {
+  displayedColumns: string[] = ['cachorro', 'tutor', 'endereco', 'data'];
+  dataSource = new MatTableDataSource<Horario>([]);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @Output() horarioSelecionado = new EventEmitter<horario>();
+  @Output() horarioSelecionado = new EventEmitter<Horario>();
   @Input() mostrarConcluidos = false;
+
+  // Propriedades para filtros
+  filtroTexto: string = '';
+  filtroData: Date | null = null;
+  filtroDataSelecionada: Date | null = null;
+
+  // 🔥 CONTROLE DE RESPONSIVIDADE
+  screenWidth: number = window.innerWidth;
 
   constructor(private horarioService: HorarioService) { }
 
-  private carregarDados(): void {
-    if (this.mostrarConcluidos) {
-      const concluidos = this.horarioService.getHorariosConcluidos().map(h => h.horario);
-      this.dataSource.data = concluidos;
-    } else {
-      this.horarioService.horarios$.subscribe(h => {
-        this.dataSource.data = h;
-      });
-    }
-
-    this.aplicarFiltros();
-  }
+  @HostListener('window:resize')
+onResize() {
+  this.screenWidth = window.innerWidth;
+  this.ajustarColunas();
+}
 
   ngOnInit(): void {
     this.carregarDados();
+    this.configurarFiltro();
+    this.ajustarColunas();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -50,53 +46,74 @@ export class TableComponent implements OnInit, OnChanges {
     }
   }
 
-  selecionarHorario(horario: horario) {
-    this.horarioSelecionado.emit(horario);
+  // 🔥 AJUSTAR COLUNAS BASEADO NA LARGURA DA TELA
+  private ajustarColunas() {
+    if (this.screenWidth < 500) {
+      this.displayedColumns = ['cachorro', 'tutor', 'data']; // Sem endereço
+    } else {
+      this.displayedColumns = ['cachorro', 'tutor', 'endereco', 'data']; // Com endereço
+    }
   }
 
-  filtrarTabela(event: Event) {
+  private carregarDados(): void {
+    this.horarioService.horarios$.subscribe(horarios => {
+      this.dataSource.data = horarios;
+      if (this.paginator) {
+        this.dataSource.paginator = this.paginator;
+      }
+    });
+  }
+
+  private configurarFiltro() {
+    this.dataSource.filterPredicate = (data: Horario, filter: string) => {
+      const filterObj = JSON.parse(filter);
+
+      // Filtro por texto (nome do pet, tutor ou endereço)
+      const nomePet = data.cachorro?.nome?.toLowerCase() || '';
+      const nomeTutor = data.cachorro?.nomeTutor?.toLowerCase() || '';
+      const endereco = data.cachorro?.enderecoCachorro?.toLowerCase() || '';
+      
+      const textoMatch = filterObj.texto
+        ? nomePet.includes(filterObj.texto) || 
+          nomeTutor.includes(filterObj.texto) ||
+          endereco.includes(filterObj.texto)
+        : true;
+
+      // Filtro por data
+      let dataMatch = true;
+      if (filterObj.data) {
+        const dataHorario = data.data.split(' ')[0]; // "dd/MM/yyyy"
+        dataMatch = dataHorario === filterObj.data;
+      }
+
+      return textoMatch && dataMatch;
+    };
+  }
+
+  aplicarFiltroTexto(event: Event) {
     this.filtroTexto = (event.target as HTMLInputElement).value.trim().toLowerCase();
     this.aplicarFiltros();
   }
 
   filtrarPorData(event: MatDatepickerInputEvent<Date>) {
-    const data = event.value;
-    this.filtroData = data ? this.formatarData(data) : '';
+    this.filtroData = event.value;
+    this.filtroDataSelecionada = event.value;
     this.aplicarFiltros();
   }
 
   aplicarFiltros() {
-    const filtro: FiltroHorario = {
+    const filtroObj = {
       texto: this.filtroTexto,
-      data: this.filtroData
+      data: this.filtroData ? this.formatarData(this.filtroData) : null
     };
 
-    this.dataSource.filterPredicate = (item: horario, filtroJson: string) => {
-      let filtro: FiltroHorario;
-      try {
-        filtro = JSON.parse(filtroJson);
-      } catch {
-        return true;
-      }
-
-      const nomePet = item.cachorros[0]?.nomeCachorro?.toLowerCase() || '';
-      const nomeTutor = item.cachorros[0]?.nomeTutor?.toLowerCase() || '';
-      const textoMatch = filtro.texto
-        ? nomePet.includes(filtro.texto) || nomeTutor.includes(filtro.texto)
-        : true;
-
-      const dataItem = this.formatarData(new Date(item.data + 'T03:00:00'));
-      const dataMatch = filtro.data ? dataItem === filtro.data : true;
-
-      return textoMatch && dataMatch;
-    };
-
-    this.dataSource.filter = JSON.stringify(filtro);
+    this.dataSource.filter = JSON.stringify(filtroObj);
   }
 
   limparFiltros() {
     this.filtroTexto = '';
-    this.filtroData = '';
+    this.filtroData = null;
+    this.filtroDataSelecionada = null;
     this.aplicarFiltros();
   }
 
@@ -107,36 +124,67 @@ export class TableComponent implements OnInit, OnChanges {
     return `${dia}/${mes}/${ano}`;
   }
 
-  ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-
-    const resizer = document.querySelector('.resizer') as HTMLElement;
-    const leftPane = document.querySelector('.left-pane') as HTMLElement;
-    const rightPane = document.querySelector('.right-pane') as HTMLElement;
-
-    let isResizing = false;
-
-    resizer.addEventListener('mousedown', () => {
-      isResizing = true;
-      document.body.style.cursor = 'col-resize';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isResizing) return;
-      const containerOffsetLeft = leftPane.parentElement!.offsetLeft;
-      const newLeftWidth = e.clientX - containerOffsetLeft;
-      leftPane.style.width = `${newLeftWidth}px`;
-      rightPane.style.width = `calc(100% - ${newLeftWidth}px - 5px)`;
-    });
-
-    document.addEventListener('mouseup', () => {
-      isResizing = false;
-      document.body.style.cursor = 'default';
-    });
+  selecionarHorario(horario: Horario) {
+    this.horarioSelecionado.emit(horario);
   }
 
   public recarregarDados(): void {
     this.carregarDados();
   }
 
+  ngAfterViewInit() {
+    this.dataSource.paginator = this.paginator;
+
+    // CÓDIGO DO RESIZE
+    const resizer = document.querySelector('.resizer') as HTMLElement;
+    const leftPane = document.querySelector('.left-pane') as HTMLElement;
+    const rightPane = document.querySelector('.right-pane') as HTMLElement;
+
+    if (!resizer || !leftPane || !rightPane) return;
+
+    let isResizing = false;
+    let startX: number;
+    let startWidth: number;
+
+    resizer.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = leftPane.getBoundingClientRect().width;
+
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      resizer.classList.add('resizing');
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+
+      const container = leftPane.parentElement;
+      if (!container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const newWidth = startWidth + (e.clientX - startX);
+
+      const minWidth = 200;
+      const maxWidth = containerRect.width - 300;
+
+      if (newWidth > minWidth && newWidth < maxWidth) {
+        leftPane.style.width = `${newWidth}px`;
+        rightPane.style.width = `calc(100% - ${newWidth}px - 5px)`;
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = 'auto';
+        resizer.classList.remove('resizing');
+      }
+    });
+
+    resizer.addEventListener('dragstart', (e) => {
+      e.preventDefault();
+    });
+  }
 }

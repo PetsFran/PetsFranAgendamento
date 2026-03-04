@@ -1,0 +1,200 @@
+.lista-container {
+  padding: 16px;
+  background-color: #fcacac;
+  max-height: 80vh;
+  overflow-y: auto;
+
+  h2 {
+    text-align: center;
+    font-weight: bold;
+    color: #5b2828;
+    margin-bottom: 16px;
+    font-size: 1.3rem;
+  }
+}
+
+// FILTROS
+.filtros {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+
+  mat-form-field {
+    flex: 1;
+    min-width: 200px;
+    
+    ::ng-deep .mat-form-field-wrapper {
+      padding-bottom: 0;
+    }
+  }
+  
+  button {
+    height: 48px;
+    background-color: #b65151;
+    color: white;
+    font-size: 0.9rem;
+    
+    &:hover {
+      background-color: #cd8f8f;
+    }
+  }
+}
+
+// FLEXBOX CONTAINER
+.cachorros-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin: 0 auto;
+  width: 100%;
+}
+
+// CARD DE CACHORRO
+.cachorro-card {
+  background-color: #fff0f0;
+  border: 1px solid #b65151;
+  border-radius: 6px;
+  padding: 10px;
+  color: #5b2828;
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+  max-width: 250px;
+  flex: 0 1 230px;
+  box-sizing: border-box;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(182, 81, 81, 0.3);
+  }
+
+  h3 {
+    color: #b65151;
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #b65151;
+    padding-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .info {
+    p {
+      margin: 4px 0;
+      font-size: 0.85rem;
+      word-break: break-word;
+    }
+
+    // ESTILO PARA LINKS
+    .link-contato, .link-endereco {
+      color: #5b2828;
+      
+      &:hover {
+        color: #b65151;
+        text-decoration: underline;
+      }
+    }
+
+    .endereco {
+      font-size: 0.8rem;
+      color: #666;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      display: inline-block;
+      max-width: 100%;
+    }
+  }
+
+  // 🔥 FOOTER CLICÁVEL
+  .card-footer {
+    margin-top: 8px;
+    text-align: center;
+    
+    .editar-hint {
+      font-size: 0.75rem;
+      color: #b65151;
+      font-style: italic;
+      cursor: pointer; // ← SÓ AQUI TEM CURSOR POINTER
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+      
+      &:hover {
+        background-color: rgba(182, 81, 81, 0.1);
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+// MENSAGEM DE SEM RESULTADOS
+.sem-resultados {
+  text-align: center;
+  padding: 30px;
+  color: #5b2828;
+
+  p {
+    margin-bottom: 12px;
+    font-size: 1rem;
+  }
+
+  .botao-cadastrar {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #b65151;
+    color: white;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: #cd8f8f;
+    }
+  }
+}
+
+// RESPONSIVIDADE
+@media (max-width: 600px) {
+  .filtros {
+    flex-direction: column;
+    
+    mat-form-field {
+      width: 100%;
+    }
+    
+    button {
+      width: 100%;
+    }
+  }
+  
+  .cachorros-flex {
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .cachorro-card {
+    flex: 0 1 100%;
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .cachorros-flex {
+    justify-content: space-around;
+  }
+  
+  .cachorro-card {
+    flex: 0 1 220px;
+  }
+}
+
+@media (min-width: 901px) {
+  .cachorros-flex {
+    justify-content: center;
+  }
+}

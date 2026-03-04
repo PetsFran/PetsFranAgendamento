@@ -1,84 +1,76 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { cachorro } from '../models/cachorro.model';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
+import { Cachorro, CreateCachorroDto, UpdateCachorroDto } from '../models/cachorro.model';
+import { environment } from '../environments/environment';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CachorroService {
-  private CACHORROS_KEY = 'cachorros';
-  
-  //BehaviorSubject para estado reativo
-  private cachorrosSubject = new BehaviorSubject<cachorro[]>(this.getCachorros());
+  private apiUrl = `${environment.apiUrl}/cachorros`;
+  private cachorrosSubject = new BehaviorSubject<Cachorro[]>([]);
   cachorros$ = this.cachorrosSubject.asObservable();
 
-  //Retorna boolean indicando sucesso/falha
-  salvarCachorro(c: cachorro): boolean {
-    if (!this.validarCachorro(c)) {
-      return false;
-    }
+  constructor(private http: HttpClient) {
+    this.carregarCachorros();
+  }
 
-    const lista = this.getCachorros();
+  carregarCachorros(): void {
+    this.http.get<Cachorro[]>(this.apiUrl).subscribe({
+      next: (data) => this.cachorrosSubject.next(data),
+      error: (err) => console.error('Erro ao carregar cachorros', err)
+    });
+  }
 
-    // ✅ VALIDAÇÃO: Verifica duplicação
-    const jaExiste = lista.some(item =>
-      item.nomeCachorro.toLowerCase() === c.nomeCachorro.toLowerCase() &&
-      item.nomeTutor.toLowerCase() === c.nomeTutor.toLowerCase() &&
-      item.contatoTutor.toLowerCase() === c.contatoTutor.toLowerCase()
+  getCachorros(): Cachorro[] {
+    return this.cachorrosSubject.value;
+  }
+
+  getCachorroById(id: number): Observable<Cachorro> {
+    return this.http.get<Cachorro>(`${this.apiUrl}/${id}`);
+  }
+
+  salvarCachorro(dto: CreateCachorroDto): Observable<Cachorro> {
+    return this.http.post<Cachorro>(this.apiUrl, dto).pipe(
+      tap(novoCachorro => {
+        const lista = this.cachorrosSubject.value;
+        this.cachorrosSubject.next([...lista, novoCachorro]);
+      }),
+      catchError(this.handleError)
     );
+  }
 
-    if (jaExiste) {
-      return false; //Retorna false em vez de alert
+  atualizarCachorro(id: number, dto: UpdateCachorroDto): Observable<Cachorro> {
+    return this.http.put<Cachorro>(`${this.apiUrl}/${id}`, dto).pipe(
+      tap(cachorroAtualizado => {
+        const lista = this.cachorrosSubject.value;
+        const index = lista.findIndex(c => c.id === id);
+        if (index > -1) {
+          lista[index] = cachorroAtualizado;
+          this.cachorrosSubject.next([...lista]);
+        }
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  deletarCachorro(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        const lista = this.cachorrosSubject.value.filter(c => c.id !== id);
+        this.cachorrosSubject.next(lista);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  private handleError(error: any) {
+    console.error('Erro na API:', error);
+    let mensagem = 'Erro ao processar requisição';
+    if (error.error?.message) {
+      mensagem = error.error.message;
+    } else if (error.status === 401) {
+      mensagem = 'Sessão expirada. Faça login novamente.';
     }
-
-    lista.push(c);
-    localStorage.setItem(this.CACHORROS_KEY, JSON.stringify(lista));
-    
-    //Emite a nova lista para todos os subscribers
-    this.cachorrosSubject.next(lista);
-    
-    return true;
-  }
-
-  getCachorros(): cachorro[] {
-    const data = localStorage.getItem(this.CACHORROS_KEY);
-    return data ? JSON.parse(data) : [];
-  }
-
-  //Método para buscar cachorro por ID (se seu model tiver id)
-  getCachorroById(id: string): cachorro | undefined {
-    return this.getCachorros().find(c => c.id === id);
-  }
-
-  //Método para atualizar cachorro existente
-  atualizarCachorro(cachorroAtualizado: cachorro): boolean {
-    const lista = this.getCachorros();
-    const index = lista.findIndex(c => c.id === cachorroAtualizado.id);
-    
-    if (index > -1) {
-      lista[index] = cachorroAtualizado;
-      localStorage.setItem(this.CACHORROS_KEY, JSON.stringify(lista));
-      this.cachorrosSubject.next(lista);
-      return true;
-    }
-    
-    return false;
-  }
-
-  //Método para remover cachorro
-  removerCachorro(id: string): void {
-    const lista = this.getCachorros().filter(c => c.id !== id);
-    localStorage.setItem(this.CACHORROS_KEY, JSON.stringify(lista));
-    this.cachorrosSubject.next(lista);
-  }
-
-  //Validação de dados obrigatórios
-  private validarCachorro(c: cachorro): boolean {
-    return !!(c.nomeCachorro && c.nomeTutor && c.contatoTutor);
-  }
-
-  //Forçar atualização do state
-  atualizarLista(): void {
-    this.cachorrosSubject.next(this.getCachorros());
+    return throwError(() => new Error(mensagem));
   }
 }

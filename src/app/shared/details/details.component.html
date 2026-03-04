@@ -1,36 +1,34 @@
 <h2>Detalhes do Horário</h2>
 <div *ngIf="horario">
-  <p><strong>Pet:</strong> {{ horario.cachorros[0]?.nomeCachorro }}</p>
-
-  <p><strong>Tutor:</strong> {{ horario.cachorros[0]?.nomeTutor }}</p>
-
-  <p><strong>Raça:</strong> {{ horario.cachorros[0]?.raca }}</p>
-
+  <p><strong>Pet:</strong> {{ horario.cachorro?.nome }}</p>
+  <p><strong>Tutor:</strong> {{ horario.cachorro?.nomeTutor }}</p>
+  <p><strong>Raça:</strong> {{ horario.cachorro?.raca }}</p>
+  
   <p>
     <strong>Contato:</strong>
     <a [href]="whatsappLink" target="_blank" rel="noopener">
-      {{ horario.cachorros[0]?.contatoTutor }}
+      {{ horario.cachorro?.contatoTutor }}
     </a>
   </p>
 
   <p>
     <strong>Endereço:</strong>
     <a [href]="enderecoGoogleMaps" target="_blank" rel="noopener">
-      {{ horario.cachorros[0]?.endereco }}
+      {{ enderecoCachorro }}
     </a>
   </p>
 
-  <p><strong>Data:</strong> {{ horario.data | date:'dd/MM/yyyy' }} - {{ horario.horario }}</p>
+  <p><strong>Data:</strong> {{ horario.data | date: "dd/MM/yyyy HH:mm" }}</p>
 
   <p>
     <strong>Serviços:</strong>
-    {{ horario.servicosBaseSelecionado }}
+    {{ horario.servicoBaseSelecionado }}
     <span *ngIf="horario.adicionais?.length">
-      - {{ horario.adicionais.join(", ") }}</span
-    >
+      - {{ horario.adicionais.join(", ") }}
+    </span>
   </p>
   <hr />
-  <p><strong>Valor total:</strong> R${{ horario.valorTotal }},00</p>
+  <p><strong>Valor total:</strong> R$ {{ horario.valorTotal.toFixed(2) }}</p>
 
   <div class="buttons">
     <button *ngIf="!mostrarConcluidos" (click)="editarHorario()">Editar</button>

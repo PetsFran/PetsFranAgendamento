@@ -3,11 +3,12 @@
     <mat-label>Buscar por pet ou tutor</mat-label>
     <input
       matInput
-      (keyup)="filtrarTabela($event)"
+      (keyup)="aplicarFiltroTexto($event)"
       placeholder="Digite para filtrar"
     />
   </mat-form-field>
 
+  <!-- 🔥 FILTRO DE DATA ADICIONADO! -->
   <mat-form-field appearance="outline">
     <mat-label>Filtrar por data</mat-label>
     <input
@@ -15,6 +16,7 @@
       [matDatepicker]="picker"
       (dateChange)="filtrarPorData($event)"
       placeholder="Escolha uma data"
+      [value]="filtroDataSelecionada"
     />
     <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
     <mat-datepicker #picker></mat-datepicker>
@@ -32,27 +34,34 @@
     <ng-container matColumnDef="cachorro">
       <mat-header-cell *matHeaderCellDef> Cachorro </mat-header-cell>
       <mat-cell *matCellDef="let h">
-        {{ h.cachorros[0]?.nomeCachorro }}
+        {{ h.cachorro?.nome }}
       </mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="tutor">
       <mat-header-cell *matHeaderCellDef> Tutor </mat-header-cell>
       <mat-cell *matCellDef="let h">
-        {{ h.cachorros[0]?.nomeTutor }}
+        {{ h.cachorro?.nomeTutor }}
+      </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="data">
+      <mat-header-cell *matHeaderCellDef> Data/Horário </mat-header-cell>
+      <mat-cell *matCellDef="let h">
+        {{ h.data.split(" ")[0] }} {{ h.data.split(" ")[1]?.substring(0, 5) }}
       </mat-cell>
     </ng-container>
 
     <ng-container matColumnDef="endereco">
       <mat-header-cell *matHeaderCellDef> Endereço </mat-header-cell>
       <mat-cell *matCellDef="let h">
-        {{ h.cachorros[0]?.endereco }}
+        <span
+          class="truncate-text"
+          [title]="h.cachorro?.enderecoCachorro || 'Não informado'"
+        >
+          {{ h.cachorro?.enderecoCachorro || "Não informado" }}
+        </span>
       </mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="horario">
-      <mat-header-cell *matHeaderCellDef> Horário </mat-header-cell>
-      <mat-cell *matCellDef="let h"> {{  h.data | date:'dd/MM/yyyy' }} - {{ h.horario }} </mat-cell>
     </ng-container>
 
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
@@ -73,7 +82,6 @@
 
 <ng-template #semResultados>
   <div style="text-align: center; margin-top: 2rem; color: #888">
-    <p>Nenhum resultado encontrado para os filtros aplicados.</p>
-    <button mat-button (click)="limparFiltros()">Limpar filtros</button>
+    <p>Nenhum horário encontrado.</p>
   </div>
 </ng-template>

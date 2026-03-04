@@ -1,8 +1,12 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';  // ← IMPORTAR!
 import { FormCadastroComponent } from './shared/form-cadastro/form-cadastro.component';
-import { horario } from './core/models/horario.model';
+import { FormLoginComponent } from './shared/form-login/form-login.component';
+import { Horario } from './core/models/horario.model';
 import { TableComponent } from './shared/table/table.component';
+import { AuthService } from './core/services/auth.service';
+import { ListaCachorrosComponent } from './shared/lista-cachorros/lista-cachorros.component';
 
 @Component({
   selector: 'app-root',
@@ -10,12 +14,36 @@ import { TableComponent } from './shared/table/table.component';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  horarioAtual: horario | null = null;
+  horarioAtual: Horario | null = null;
+  mostrarConcluidos: boolean = false;
 
-  @Input() mostrarConcluidos: boolean = false;
   @ViewChild(TableComponent) tabela!: TableComponent;
 
-  constructor(private dialog: MatDialog) { }
+  // Getter para facilitar no template
+  get isLogado(): boolean {
+    return !!this.authService.getToken();
+  }
+
+  constructor(
+    private dialog: MatDialog,
+    public authService: AuthService,
+    private router: Router  // ← ADICIONADO!
+  ) { }
+
+  abrirFormLogin() {
+    this.dialog.open(FormLoginComponent, {
+      panelClass: 'custom-dialog',
+      width: '300px'
+    });
+  }
+
+  abrirListaCachorros() {
+    this.dialog.open(ListaCachorrosComponent, {
+      panelClass: 'custom-dialog',
+      width: '800px',
+      maxWidth: '95vw'
+    });
+  }
 
   abrirFormCachorro() {
     this.dialog.open(FormCadastroComponent, {
@@ -35,18 +63,38 @@ export class AppComponent {
     this.mostrarConcluidos = !this.mostrarConcluidos;
   }
 
-  mostrarDetalhes(h: horario) {
-    this.horarioAtual = h;
+  mostrarDetalhes(horario: Horario) {
+    this.horarioAtual = horario;
   }
 
   limparDetalhes() {
-    this.horarioAtual = null; // ⬅️ LIMPA OS DETALHES
+    this.horarioAtual = null;
   }
 
   atualizarTabela() {
-    this.horarioAtual = null; // limpa o painel de detalhes
-    this.tabela.recarregarDados(); // força a tabela a recarregar os dados
+    this.horarioAtual = null;
+    this.tabela.recarregarDados();
   }
 
+  logout() {
+    // Se não tem token, só redireciona para login
+    if (!this.authService.getToken()) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
+    // Tenta fazer logout na API
+    this.authService.logout().subscribe({
+      next: () => {
+        console.log('Logout realizado com sucesso');
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error('Erro no logout, mas limpando sessão mesmo assim', err);
+        // Mesmo com erro, limpa a sessão local
+        localStorage.removeItem('access_token');
+        this.router.navigate(['/login']);
+      }
+    });
+  }
 }

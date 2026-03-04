@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { horario } from 'src/app/core/models/horario.model';
+import { Horario } from 'src/app/core/models/horario.model';
 import { HorarioService } from 'src/app/core/services/horario.service';
 import { FormEdicaoComponent } from '../form-edicao/form-edicao.component';
 
@@ -10,7 +10,7 @@ import { FormEdicaoComponent } from '../form-edicao/form-edicao.component';
   styleUrls: ['./details.component.scss']
 })
 export class DetailsComponent {
-  @Input() horario: horario | null = null;
+  @Input() horario: Horario | null = null;
   @Input() mostrarConcluidos: boolean = false;
   @Output() horarioEditado = new EventEmitter<void>();
   @Output() horarioConcluido = new EventEmitter<void>();
@@ -25,42 +25,49 @@ export class DetailsComponent {
 
     const dialogRef = this.dialog.open(FormEdicaoComponent, {
       width: '240px',
-      data: { horario: { ...this.horario } }
+      data: { horario: this.horario }
     });
 
     dialogRef.afterClosed().subscribe(resultado => {
       if (resultado) {
-        try {
-          this.horarioService.atualizarHorario(resultado);
-          alert('Horário atualizado com sucesso!');
-          this.horarioEditado.emit();
-        } catch (error) {
-          alert('Erro ao atualizar horário: ' + error);
-        }
+        alert('Horário atualizado com sucesso!');
+        this.horarioEditado.emit();
       }
     });
   }
 
   concluirHorario() {
     if (this.horario) {
-      this.horarioService.removerHorario(this.horario.id);
-      this.horarioService.salvarHorarioConcluido(this.horario);
-      this.horarioService.emitirHorariosConcluidos();
-      
-      this.horarioConcluido.emit(); // ⬅️ EMITE O EVENTO
-      
-      alert('Horário concluído e movido para histórico por 30 dias.');
+      this.horarioService.deletarHorario(this.horario.id).subscribe({
+        next: () => {
+          alert('Horário concluído e removido!');
+          this.horarioConcluido.emit();
+        },
+        error: (err) => alert('Erro ao concluir horário: ' + err.message)
+      });
     }
   }
 
   get whatsappLink(): string {
-    if (!this.horario?.cachorros[0]?.contatoTutor) return '#';
-    const numero = this.horario.cachorros[0].contatoTutor.replace(/\D/g, '');
+    if (!this.horario?.cachorro?.contatoTutor) return '#';
+    const numero = this.horario.cachorro.contatoTutor.replace(/\D/g, '');
     return `https://wa.me/55${numero}`;
   }
 
+  // 🔥 GETTER INTELIGENTE
+  get enderecoCachorro(): string {
+    if (!this.horario?.cachorro) return 'Não informado';
+    
+    // Tenta todas as possibilidades
+    const cachorro = this.horario.cachorro as any;
+    return cachorro.enderecoCachorro || 
+           cachorro.endereco || 
+           'Não informado';
+  }
+
   get enderecoGoogleMaps(): string {
-    if (!this.horario?.cachorros[0]?.endereco) return '#';
-    return `https://maps.google.com/?q=${encodeURIComponent(this.horario.cachorros[0].endereco)}`;
+    const endereco = this.enderecoCachorro;
+    if (endereco === 'Não informado') return '#';
+    return `https://maps.google.com/?q=${encodeURIComponent(endereco)}`;
   }
 }

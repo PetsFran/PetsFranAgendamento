@@ -1,15 +1,18 @@
 <header>
   <h1>Pet's Fran</h1>
   <nav>
-    <button (click)="abrirFormHorario()">Cadastrar Horário</button>
-    <button (click)="abrirFormCachorro()">Cadastrar Cachorro</button>
-    <button (click)="alternarHorariosConcluidos()">
-      {{ mostrarConcluidos ? "Ver Ativos" : "Últimos 30 dias" }}
-    </button>
+    <ng-container *ngIf="isLogado">
+      <button (click)="abrirFormHorario()">Cadastrar Horário</button>
+      <button (click)="abrirFormCachorro()">Cadastrar Cachorro</button>
+      <button (click)="abrirListaCachorros()">Lista de Cachorros</button>
+      <button (click)="logout()">Sair</button>
+    </ng-container>
+
+    <button *ngIf="!isLogado" (click)="abrirFormLogin()">Login</button>
   </nav>
 </header>
 
-<main class="main-container">
+<main class="main-container" *ngIf="isLogado">
   <div class="pane left-pane">
     <!-- Tabela -->
     <app-table
@@ -30,3 +33,9 @@
     ></app-details>
   </div>
 </main>
+
+<!-- Mensagem para usuário não logado -->
+<div class="nao-logado-mensagem" *ngIf="!isLogado">
+  <h2>🐾 Bem-vindo 🐾</h2>
+  <p>Faça login para acessar a agenda</p>
+</div>

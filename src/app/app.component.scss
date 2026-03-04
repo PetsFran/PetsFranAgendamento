@@ -89,6 +89,25 @@ main {
   background-color: #5b2828;
 }
 
+.nao-logado-mensagem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+  color: #5b2828;
+  
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    font-size: 1.2rem;
+    opacity: 0.8;
+  }
+}
 
 @media (max-width: 700px) {
   main{

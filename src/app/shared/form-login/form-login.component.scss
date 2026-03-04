@@ -1,0 +1,70 @@
+.form-login {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background-color: #fcacac;
+  max-height: 80vh;
+  overflow-y: auto;
+
+  h2 {
+    text-align: center;
+    font-weight: bold;
+  }
+
+  input,
+  select {
+    border: 1px solid #5b2828;
+    border-radius: 6px;
+    background-color: #fcacac;
+    color: #5b2828;
+    font-size: 1rem;
+  }
+
+  .inputLoginContainer {
+    padding: 8px;
+  }
+
+  .erro-mensagem {
+    color: #b65151;
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+
+  .registro-link {
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 8px;
+    
+    a {
+      color: #5b2828;
+      text-decoration: underline;
+      cursor: pointer;
+      
+      &:hover {
+        color: #b65151;
+      }
+    }
+  }
+
+  button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #b65151;
+    color: white;
+    transition: background-color 0.3s ease;
+
+    &:hover:not(:disabled) {
+      background-color: #cd8f8f;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
