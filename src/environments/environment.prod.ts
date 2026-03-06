@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://petmind-production.up.railway.app/api'  // ← URL do Railway!
+  apiUrl: 'https://petsfranapi-production.up.railway.app/api'  // ← NOVA URL!
 };
