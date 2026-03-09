@@ -8,7 +8,6 @@
 
 - **Cadastro de pets e horários**
   - Formulário dinâmico via `MatDialog`
-  - Armazenamento local dos dados
 
 - **Visualização em tabela**
   - Lista de agendamentos com alternância entre concluídos e pendentes
@@ -30,12 +29,5 @@
 - Angular Material
 - TypeScript
 - SCSS
-- `localStorage` para persistência de dados
 
 ---
-
-## 📌 Observações
-
-- Todos os dados são armazenados localmente no navegador
-- Ideal para protótipos, MVPs ou uso offline
-- Futuramente pode ser integrado com backend em .NET e banco de dados real
